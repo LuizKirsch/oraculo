@@ -12,3 +12,6 @@ pypdf
 openpyxl
 unstructured
 pydantic-settings
+langchain-groq
+langchain-huggingface
+sentence-transformers

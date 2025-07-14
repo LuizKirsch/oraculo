@@ -6,9 +6,9 @@ class Settings(BaseSettings):
     DOCS_DIR: str = os.path.join(BASE_DIR, "oraculo_docs")
     DB_DIR: str = os.path.join(BASE_DIR, "db_oraculo")
 
-    OPENAI_API_KEY: str
-    EMBEDDING_MODEL: str = "text-embedding-3-small"
-    LLM_MODEL: str = "gpt-4"
+    GROQ_API_KEY: str
+    EMBEDDING_MODEL: str = "sentence-transformers/all-MiniLM-L6-v2"
+    LLM_MODEL: str = "llama3-70b-8192"
 
     CHUNK_SIZE: int = 1000
     CHUNK_OVERLAP: int = 200

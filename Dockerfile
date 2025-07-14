@@ -14,7 +14,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 # Copia e instala as dependências Python no venv
 # Fazer isso em uma camada separada aproveita o cache do Docker
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt --default-timeout=6000
 
 # --- Estágio 2: Final ---
 # Usamos uma imagem "slim" para um resultado final muito menor

@@ -4,57 +4,47 @@ import pytesseract
 from langchain_community.document_loaders import PyPDFLoader, UnstructuredWordDocumentLoader, UnstructuredExcelLoader, TextLoader
 from langchain.schema import Document
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_openai import OpenAIEmbeddings
+# from langchain_openai import OpenAIEmbeddings
+from langchain_community.embeddings import HuggingFaceEmbeddings # Descomentar e usar se mudar para HF Embeddings
 from langchain_community.vectorstores import Chroma
 from langchain.chains import RetrievalQA
 from langchain.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
 from tqdm import tqdm
 from app.config import settings, logger
-
-def carregar_documentos():
-    todos_docs = []
-    logger.info(f"Iniciando varredura de documentos em: {settings.DOCS_DIR}")
-    for admin_folder in os.listdir(settings.DOCS_DIR):
-        admin_path = os.path.join(settings.DOCS_DIR, admin_folder)
-        if os.path.isdir(admin_path):
-            admin_name = admin_folder
-            logger.info(f"--- Processando documentos da administradora: {admin_name} ---")
-            for filename in os.listdir(admin_path):
-                path = os.path.join(admin_path, filename)
-                docs_from_file = []
-                try:
-                    if filename.lower().endswith(".pdf"):
-                        docs_from_file = PyPDFLoader(path).load()
-                    elif filename.lower().endswith((".png", ".jpg", ".jpeg")):
-                        texto = pytesseract.image_to_string(Image.open(path))
-                        docs_from_file = [Document(page_content=texto, metadata={"source": path})]
-                    
-                    for doc in docs_from_file:
-                        doc.page_content = f"Fonte do documento: Administradora {admin_name}.\n---\nConteúdo: {doc.page_content}"
-                        doc.metadata["source"] = path
-                        todos_docs.append(doc)
-                    logger.info(f"Carregado e enriquecido: {filename}")
-                except Exception as e:
-                    logger.error(f"Erro ao processar o arquivo {filename}: {e}", exc_info=True)
-    return todos_docs
+from langchain_groq import ChatGroq
 
 def salvar_banco_vector(docs):
     if not docs:
         logger.warning("Nenhum documento para salvar no banco vetorial.")
         return
-    splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+    splitter = RecursiveCharacterTextSplitter(chunk_size=settings.CHUNK_SIZE, chunk_overlap=settings.CHUNK_OVERLAP) # Usar settings
     docs_divididos = splitter.split_documents(docs)
-    embedding = OpenAIEmbeddings(model=settings.EMBEDDING_MODEL)
+
+    # Escolha do modelo de Embeddings:
+    # Opção 1: Manter OpenAI Embeddings
+    # embedding = OpenAIEmbeddings(model=settings.EMBEDDING_MODEL)
+    # Opção 2: Mudar para HuggingFace Embeddings (requer download do modelo, pode ser mais pesado no Docker)
+    embedding = HuggingFaceEmbeddings(model_name=settings.EMBEDDING_MODEL)
+
     os.makedirs(settings.DB_DIR, exist_ok=True)
     vectordb = Chroma.from_documents(docs_divididos, embedding=embedding, persist_directory=settings.DB_DIR)
     vectordb.persist()
     logger.info("Persistência do banco vetorial concluída.")
 
 def carregar_chain():
-    embedding = OpenAIEmbeddings(model=settings.EMBEDDING_MODEL)
+    # Escolha do modelo de Embeddings:
+    # Opção 1: Manter OpenAI Embeddings
+    # embedding = OpenAIEmbeddings(model=settings.EMBEDDING_MODEL)
+    # Opção 2: Mudar para HuggingFace Embeddings
+    embedding = HuggingFaceEmbeddings(model_name=settings.EMBEDDING_MODEL)
+
     vectordb = Chroma(persist_directory=settings.DB_DIR, embedding_function=embedding)
     retriever = vectordb.as_retriever(search_kwargs={'k': 8})
+    
+    # AQUI ESTÁ A MUDANÇA PRINCIPAL: Usar ChatGroq
+    llm = ChatGroq(model_name=settings.LLM_MODEL, temperature=0, groq_api_key=settings.GROQ_API_KEY)
+
     template = """
     Você é um assistente de IA chamado **Lupito**, um lobo inteligente e leal.
     REGRAS RÍGIDAS:
@@ -71,7 +61,7 @@ def carregar_chain():
     """
     prompt = PromptTemplate(template=template, input_variables=["context", "question"])
     chain = RetrievalQA.from_chain_type(
-        llm=ChatOpenAI(model_name=settings.LLM_MODEL, temperature=0),
+        llm=llm, # Usar o LLM do Groq
         retriever=retriever,
         return_source_documents=True,
         chain_type_kwargs={"prompt": prompt}
