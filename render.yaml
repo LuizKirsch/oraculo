@@ -1,4 +1,3 @@
-# render.yaml (Exemplo com Cron Job para ingestão)
 services:
   - type: web
     name: oraculo-api
@@ -18,14 +17,13 @@ services:
       - name: oraculo-data
         path: /app/db_oraculo
 
-  # Serviço de ingestão como Cron Job
-  - type: cron_job # Alterado de 'job' para 'cron_job'
-    name: oraculo-ingestao-cron # Novo nome para o cron job
+  - type: cron  # <- Aqui está a correção
+    name: oraculo-ingestao-cron
     env: python
     dockerfilePath: Dockerfile
     buildCommand: ""
     startCommand: "python app/ingestao.py"
-    schedule: "0 0 * * *" # Exemplo: Roda todos os dias à meia-noite (UTC)
+    schedule: "0 0 * * *"
     autoDeploy: false
     disks:
       - name: oraculo-data
