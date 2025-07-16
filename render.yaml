@@ -17,8 +17,8 @@ services:
       - name: oraculo-data
         path: /app/db_oraculo
 
-  - type: background
-    name: oraculo-ingestao
+  - type: worker
+    name: oraculo-ingestao-worker
     env: python
     dockerfilePath: Dockerfile
     buildCommand: ""
