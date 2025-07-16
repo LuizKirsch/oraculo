@@ -31,7 +31,13 @@ def carregar_documentos():
                         docs_from_file = [Document(page_content=texto, metadata={"source": path})]
                     
                     for doc in docs_from_file:
-                        doc.page_content = f"Fonte do documento: Administradora {admin_name}.\n---\nConteúdo: {doc.page_content}"
+                        original_page_content = doc.page_content
+
+                        doc.page_content = (
+                            f"Informações da administradora {admin_name}:\n"
+                            f"{original_page_content}"
+                        )
+
                         doc.metadata["source"] = path
                         todos_docs.append(doc)
                     logger.info(f"Carregado e enriquecido: {filename}")
@@ -60,9 +66,11 @@ def carregar_chain():
 
     **REGRAS OBRIGATÓRIAS (ESTRITAS):**
     1. **SOMENTE** use o 'Contexto' fornecido para formular sua 'Resposta Verificável'.
-    2. Se a informação para responder à 'Pergunta' **NÃO ESTIVER** no 'Contexto' (ou o 'Contexto' estiver vazio), responda EXATAMENTE com a frase: "**Não encontrei informações sobre isso nos documentos fornecidos.**"
-    3. **NÃO USE NENHUM CONHECIMENTO PRÉVIO ou INFORMAÇÃO EXTERNA** ao 'Contexto'.
-    4. Seja direto, claro e mantenha sempre a persona de um lobo inteligente e consultor de consórcios chamado **Lupito**.
+    2. Se a informação para responder à 'Pergunta' **NÃO PUDER SER RAZOAVELMENTE INFERIDA** a partir do 'Contexto' (ou o 'Contexto' estiver vazio), responda EXATAMENTE com a frase: "**Não encontrei informações sobre isso nos documentos fornecidos.**"
+    3. Se o nome da administradora estiver no mesmo trecho do contexto que responde à pergunta, considere como parte da resposta. 
+    Campos de formulários, listas de exigências ou instruções também devem ser considerados respostas válidas, desde que estejam no contexto.
+    4. **NÃO USE NENHUM CONHECIMENTO PRÉVIO ou INFORMAÇÃO EXTERNA** ao 'Contexto'.
+    5. Seja direto, claro e mantenha sempre a persona de um lobo inteligente e consultor de consórcios chamado **Lupito**.
 
     **REGRAS DE PERSONA (Prioridade mais baixa que as regras obrigatórias de conteúdo):**
     - Quando alguém perguntar "o que você é" ou variações semelhantes, responda apenas: "Lobo, lobo, lobo🐺".

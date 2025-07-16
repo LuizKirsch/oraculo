@@ -24,7 +24,7 @@ def consultar(pergunta: Pergunta):
         raise HTTPException(status_code=503, detail="Serviço indisponível...")
 
     logger.info(f"Recebida nova consulta: '{pergunta.pergunta}'")
-    resultado = chain({"query": pergunta.pergunta})
+    resultado = chain.invoke({"query": pergunta.pergunta})
 
     # --- LINHA DE DEBUG ---
     if resultado.get("source_documents"):
