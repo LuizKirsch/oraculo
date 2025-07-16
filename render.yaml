@@ -1,0 +1,48 @@
+# render.yaml
+# Define os serviços que serão implantados no Render
+services:
+  - type: web # Indica que este é um serviço web (API)
+    name: oraculo-api # Nome do seu serviço no Render
+    env: python # Ambiente de execução
+    dockerfilePath: Dockerfile # Caminho para o seu Dockerfile (você precisará criar um)
+    buildCommand: "" # Comando de build. Vazio, pois o Dockerfile já cuida disso.
+    startCommand: "uvicorn app.main:app --host 0.0.0.0 --port 10000" # Comando para iniciar sua aplicação
+    ports:
+      - 10000 # Porta que sua aplicação Uvicorn vai escutar no container
+    envVars:
+      # Variáveis de ambiente que sua aplicação precisa.
+      # É CRÍTICO que você as adicione no dashboard do Render para segurança!
+      - key: OPENAI_API_KEY
+        sync: false # Não sincronizar do GitHub, configure manualmente no Render
+      # Se você tiver outras variáveis no seu .env, liste-as aqui
+      # - key: OUTRA_VARIAVEL
+      #   sync: false
+    autoDeploy: true # Habilita o deploy automático a cada push para o branch principal
+    healthCheckPath: /docs # Endpoint para o health check (FastAPI tem /docs por padrão)
+    plan: standard # Plano de serviço (starter, standard, pro). Ajuste conforme sua necessidade e orçamento.
+    # Discos persistentes são usados para dados que precisam sobreviver entre reinícios do container.
+    # Para o ChromaDB, isso é essencial para que o banco vetorial persista.
+    disks:
+      - name: oraculo-data # Nome do volume
+        path: /app/db_oraculo # Caminho dentro do container onde o volume será montado
+  
+  # Este serviço é para a ingestão de documentos.
+  # Ele pode ser um serviço "Job" que roda sob demanda ou um cron job.
+  # Para a primeira versão, sugiro um Job manual ou um Cron Job.
+  - type: job # Tipo de serviço para tarefas pontuais ou agendadas
+    name: oraculo-ingestao # Nome do serviço de ingestão
+    env: python
+    dockerfilePath: Dockerfile
+    buildCommand: ""
+    startCommand: "python app/ingestao.py" # Comando para rodar o script de ingestão
+    autoDeploy: false # Ingestão não precisa de deploy automático, pode ser acionada manualmente ou via cron.
+    # Compartilha o mesmo volume para o banco de dados vetorial
+    disks:
+      - name: oraculo-data # Referencia o volume criado acima
+        path: /app/db_oraculo
+    # Variáveis de ambiente para ingestão (as mesmas da API)
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
+      # - key: OUTRA_VARIAVEL
+      #   sync: false
