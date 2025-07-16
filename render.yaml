@@ -17,13 +17,12 @@ services:
       - name: oraculo-data
         path: /app/db_oraculo
 
-  - type: cron  # <- Aqui está a correção
-    name: oraculo-ingestao-cron
+  - type: background
+    name: oraculo-ingestao
     env: python
     dockerfilePath: Dockerfile
     buildCommand: ""
     startCommand: "python app/ingestao.py"
-    schedule: "0 0 * * *"
     autoDeploy: false
     disks:
       - name: oraculo-data
