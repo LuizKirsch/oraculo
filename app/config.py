@@ -1,5 +1,6 @@
 import os
 from pydantic_settings import BaseSettings
+import logging
 
 class Settings(BaseSettings):
     BASE_DIR: str = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -14,6 +15,7 @@ class Settings(BaseSettings):
     CHUNK_OVERLAP: int = 200
     
     INGESTION_BATCH_SIZE: int = 100
+    TOP_K_DOCUMENTS: int = 8
 
     class Config:
         env_file = ".env"
@@ -21,9 +23,9 @@ class Settings(BaseSettings):
 
 settings = Settings()
 
-import logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s'
 )
 logger = logging.getLogger(__name__)
+

@@ -10,6 +10,7 @@ from langchain.chains import RetrievalQA
 from langchain.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
 from tqdm import tqdm
+from typing import Optional
 from app.config import settings, logger
 
 def carregar_documentos():
@@ -18,21 +19,37 @@ def carregar_documentos():
     for admin_folder in os.listdir(settings.DOCS_DIR):
         admin_path = os.path.join(settings.DOCS_DIR, admin_folder)
         if os.path.isdir(admin_path):
-            admin_name = admin_folder
+            admin_name = admin_folder # Nome da pasta é o nome da administradora
             logger.info(f"--- Processando documentos da administradora: {admin_name} ---")
             for filename in os.listdir(admin_path):
                 path = os.path.join(admin_path, filename)
                 docs_from_file = []
                 try:
+                    loader = None
                     if filename.lower().endswith(".pdf"):
-                        docs_from_file = PyPDFLoader(path).load()
+                        loader = PyPDFLoader(path)
                     elif filename.lower().endswith((".png", ".jpg", ".jpeg")):
-                        texto = pytesseract.image_to_string(Image.open(path))
-                        docs_from_file = [Document(page_content=texto, metadata={"source": path})]
+                        # Para imagens, o texto é extraído diretamente e encapsulado em um Document
+                        text_content = pytesseract.image_to_string(Image.open(path))
+                        docs_from_file = [Document(page_content=text_content, metadata={"source": path, "admin_name": admin_name})]
+                    elif filename.lower().endswith((".doc", ".docx")):
+                        loader = UnstructuredWordDocumentLoader(path)
+                    elif filename.lower().endswith((".xls", ".xlsx")):
+                        loader = UnstructuredExcelLoader(path)
+                    elif filename.lower().endswith(".txt"):
+                        loader = TextLoader(path)
+                    
+                    if loader:
+                        docs_from_file = loader.load()
                     
                     for doc in docs_from_file:
+                        # Adicionar a informação da administradora no conteúdo E nos metadados
                         doc.page_content = f"Fonte do documento: Administradora {admin_name}.\n---\nConteúdo: {doc.page_content}"
+                        # Certificar-se de que metadata já é um dicionário e adicionar/atualizar 'admin_name'
+                        if not hasattr(doc, 'metadata') or not isinstance(doc.metadata, dict):
+                            doc.metadata = {}
                         doc.metadata["source"] = path
+                        doc.metadata["admin_name"] = admin_name # <<< Adicionado aqui para filtragem
                         todos_docs.append(doc)
                     logger.info(f"Carregado e enriquecido: {filename}")
                 except Exception as e:
@@ -43,18 +60,17 @@ def salvar_banco_vector(docs):
     if not docs:
         logger.warning("Nenhum documento para salvar no banco vetorial.")
         return
-    splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+    splitter = RecursiveCharacterTextSplitter(chunk_size=settings.CHUNK_SIZE, chunk_overlap=settings.CHUNK_OVERLAP)
     docs_divididos = splitter.split_documents(docs)
     embedding = OpenAIEmbeddings(model=settings.EMBEDDING_MODEL)
     os.makedirs(settings.DB_DIR, exist_ok=True)
+    # A persistência sobrescreve o banco existente ou cria um novo
     vectordb = Chroma.from_documents(docs_divididos, embedding=embedding, persist_directory=settings.DB_DIR)
     vectordb.persist()
     logger.info("Persistência do banco vetorial concluída.")
 
-def carregar_chain():
-    embedding = OpenAIEmbeddings(model=settings.EMBEDDING_MODEL)
-    vectordb = Chroma(persist_directory=settings.DB_DIR, embedding_function=embedding)
-    retriever = vectordb.as_retriever(search_kwargs={'k': 8})
+def _carregar_chain_base(retriever):
+    """Função interna para construir a RetrievalQA chain."""
     template = """
     Você é um assistente de IA chamado Lupito, um lobo inteligente e consultor de consórcios da Wolf360.
 
@@ -83,3 +99,20 @@ def carregar_chain():
         chain_type_kwargs={"prompt": prompt}
     )
     return chain
+
+def carregar_chain_com_filtro(admin_name: Optional[str] = None):
+    """
+    Carrega a RetrievalQA chain, aplicando um filtro de metadados se um nome de administradora for fornecido.
+    """
+    embedding = OpenAIEmbeddings(model=settings.EMBEDDING_MODEL)
+    vectordb = Chroma(persist_directory=settings.DB_DIR, embedding_function=embedding)
+
+    search_kwargs = {'k': settings.TOP_K_DOCUMENTS}
+    if admin_name:
+        # Se um admin_name for fornecido, adiciona o filtro de metadados
+        search_kwargs['filter'] = {'admin_name': admin_name}
+        logger.info(f"Aplicando filtro de administradora: {admin_name}")
+
+    retriever = vectordb.as_retriever(search_kwargs=search_kwargs)
+    
+    return _carregar_chain_base(retriever)
