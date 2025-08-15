@@ -1,0 +1,56 @@
+# =======================================
+# COMANDOS PARA ATUALIZAR CÓDIGO/DOCKER
+# =======================================
+
+# 1. Parar a aplicação
+docker-compose down
+
+# 2. Reconstruir a imagem Docker com as mudanças
+docker-compose build
+
+# 3. Iniciar a aplicação
+docker-compose up -d
+
+# 4. Verificar se está funcionando
+docker-compose ps
+
+# 5. (Opcional) Ver logs em tempo real
+docker-compose logs -f
+
+# =======================================
+# TESTE RÁPIDO NO INSOMNIA/POSTMAN:
+# =======================================
+# POST: http://localhost:8002/consultar
+# Header: Content-Type: application/json
+# Body: {"pergunta": "oi"}
+
+# =======================================
+# COMANDOS ÚTEIS EXTRAS:
+# =======================================
+
+# Ver logs das últimas 20 linhas:
+docker-compose logs --tail=20
+
+# Parar e remover tudo (limpeza completa):
+docker-compose down --volumes --remove-orphans
+
+# Executar apenas a ingestão (sem rebuild):
+docker-compose run --rm oraculo-app python -m app.ingestao
+
+# Entrar no container para debug:
+docker-compose exec oraculo-app bash
+
+# =======================================
+# QUANDO USAR CADA COMANDO:
+# =======================================
+# - Use este arquivo quando modificar:
+#   * Template do prompt (oraculo.py)
+#   * Lógica da API (main.py)
+#   * Configurações (config.py)
+#   * Qualquer código Python
+#
+# - Use o "comandos_gerar_banco.txt" quando:
+#   * Adicionar novos documentos
+#   * Modificar como os documentos são processados
+#   * Problema com o banco vetorial
+# =======================================
