@@ -3,7 +3,7 @@ services:
     build: .
     container_name: oraculo-api
     ports:
-      - "8000:8000"
+      - "8002:8000"
     volumes:
       - ./oraculo_docs:/app/oraculo_docs
       - ./db_oraculo:/app/db_oraculo
