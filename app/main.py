@@ -35,7 +35,26 @@ def consultar(pergunta: Pergunta):
     fontes_formatadas = []
     if resultado.get("source_documents"):
         for doc in resultado["source_documents"]:
-            fonte = os.path.basename(doc.metadata.get('source', 'Desconhecido'))
+            # Tenta usar os metadados específicos primeiro
+            pasta = doc.metadata.get('pasta', '')
+            arquivo = doc.metadata.get('arquivo', '')
+            
+            if pasta and arquivo:
+                fonte = f"{pasta}/{arquivo}"
+            else:
+                # Fallback para o método anterior
+                caminho_completo = doc.metadata.get('source', 'Desconhecido')
+                if caminho_completo != 'Desconhecido':
+                    # Extrai a pasta (administradora) e o nome do arquivo
+                    partes_caminho = caminho_completo.replace('\\', '/').split('/')
+                    if len(partes_caminho) >= 2:
+                        pasta = partes_caminho[-2]  # Pasta da administradora
+                        arquivo = partes_caminho[-1]  # Nome do arquivo
+                        fonte = f"{pasta}/{arquivo}"
+                    else:
+                        fonte = os.path.basename(caminho_completo)
+                else:
+                    fonte = 'Desconhecido'
             fontes_formatadas.append(fonte)
     
     fontes_unicas = sorted(list(set(fontes_formatadas)))
