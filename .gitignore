@@ -1,3 +1,13 @@
-/db_oraculo
-/oraculo_docs
+.spyproject
+__pycache__
 .env
+# documentos
+app/__pycache__
+streamlit/__pycache__
+test-request.py
+upload-documents.py
+documentos/
+data/
+app/persistent_cache
+app/persistent_cache.zip
+app/graphic-charter-463822-e3-b8e4ec950550.json
