@@ -12,3 +12,4 @@ pypdf
 openpyxl
 unstructured
 pydantic-settings
+pydantic
