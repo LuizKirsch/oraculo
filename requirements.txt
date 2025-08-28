@@ -13,3 +13,4 @@ openpyxl
 unstructured
 pydantic-settings
 pydantic
+azure-storage-blob
