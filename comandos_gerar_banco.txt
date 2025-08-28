@@ -1,30 +1,30 @@
-# ====================================
-# COMANDOS PARA GERAR O BANCO VETORIAL
-# ====================================
+###############################################################
+# COMANDOS PARA GERAR/RECRIAR O BANCO VETORIAL DO ORÁCULO IA  #
+###############################################################
 
-# 1. Parar a aplicação (se estiver rodando)
+## 1. Parar a aplicação (se estiver rodando)
 docker-compose down
 
-# 2. Limpar o banco vetorial atual
-Remove-Item -Recurse -Force "db_oraculo\*" -ErrorAction SilentlyContinue
+## 2. Limpar o banco vetorial e documentos
+Remove-Item -Recurse -Force "db_oraculo\*" -ErrorAction SilentlyContinue   # Remove banco vetorial
+Remove-Item -Recurse -Force "oraculo_docs\*" -ErrorAction SilentlyContinue # Remove documentos
 
-# 3. Construir a imagem Docker
+## 3. Construir a imagem Docker
 docker-compose build
 
-# 4. Executar a ingestão dos documentos
+## 4. Executar a ingestão dos documentos
 docker-compose run --rm oraculo-app python -m app.ingestao
 
-# 5. Iniciar a aplicação
+## 5. Iniciar a aplicação
 docker-compose up -d
 
-# 6. Verificar se está funcionando
+## 6. Verificar se está funcionando
 docker-compose ps
 docker-compose logs --tail=10
 
-# ====================================
-# NOTAS:
-# - Execute estes comandos sempre que:
-#   * Adicionar novos documentos na pasta oraculo_docs
-#   * Modificar a função carregar_documentos() no oraculo.py
-#   * Precisar recriar o banco vetorial do zero
-# ====================================
+###############################################################
+# QUANDO EXECUTAR ESTES COMANDOS?
+# - Ao adicionar novos documentos em oraculo_docs
+# - Ao modificar a função carregar_documentos() em app/oraculo.py
+# - Sempre que precisar recriar o banco vetorial do zero
+###############################################################
