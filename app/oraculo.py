@@ -12,6 +12,10 @@ from langchain.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
 from tqdm import tqdm
 from app.config import settings, logger
+import os as _os
+
+if _os.getenv("K_SERVICE") or _os.getenv("CLOUD_RUN_ENV"):
+    settings.DB_DIR = "/tmp/db_oraculo"
 from typing import Any
 from pydantic import Field
 

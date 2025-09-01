@@ -14,3 +14,5 @@ unstructured
 pydantic-settings
 pydantic
 azure-storage-blob
+google-cloud-storage
+python-dotenv
