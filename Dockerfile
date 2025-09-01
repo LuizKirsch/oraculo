@@ -32,17 +32,21 @@ COPY --from=builder /usr/share/tesseract-ocr/ /usr/share/tesseract-ocr/
 # Define o PATH para que o sistema encontre os executáveis no venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Adiciona um usuário não-root por questões de segurança
-RUN useradd --create-home appuser
-USER appuser
 
 # Copia o código da aplicação
 # O diretório 'app' local será copiado para '/app/app' dentro do contêiner
 COPY ./app /app/app
 
+# Copia o script de inicialização e garante permissão antes de trocar usuário
+COPY ./app/entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
+# Adiciona um usuário não-root por questões de segurança
+RUN useradd --create-home appuser
+USER appuser
+
 # Expõe a porta que a API vai rodar
 EXPOSE 8000
 
-# Comando padrão para iniciar a aplicação
-# O host 0.0.0.0 é essencial para que a API seja acessível de fora do contêiner
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Comando padrão para iniciar a aplicação, usando o entrypoint customizado
+ENTRYPOINT ["/app/entrypoint.sh"]
