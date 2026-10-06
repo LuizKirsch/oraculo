@@ -1,8 +1,14 @@
-from google.cloud import storage
 from dotenv import load_dotenv
 import os
+import sys
 
 load_dotenv()
+
+if not os.getenv("GCS_BUCKET"):
+    print("GCS_BUCKET não definido, usando o db_oraculo local.")
+    sys.exit(0)
+
+from google.cloud import storage
 
 service_account_info = {
     "type": os.getenv("GOOGLE_TYPE"),
@@ -22,7 +28,7 @@ if not all(service_account_info.values()):
     raise ValueError("Uma ou mais variáveis de credenciais do Google Cloud não foram encontradas no .env")
 
 storage_client = storage.Client.from_service_account_info(service_account_info)
-bucket = storage_client.bucket("lupito-oraculo")
+bucket = storage_client.bucket(os.environ["GCS_BUCKET"])
 
 is_cloud_run = os.getenv("K_SERVICE") or os.getenv("CLOUD_RUN_ENV")
 base_dir = "/tmp" if is_cloud_run else "/app"
