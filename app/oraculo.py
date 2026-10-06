@@ -19,21 +19,16 @@ if _os.getenv("K_SERVICE") or _os.getenv("CLOUD_RUN_ENV"):
 from typing import Any
 from pydantic import Field
 
-class AdminFilteredRetriever(BaseRetriever):
+class PastaFilteredRetriever(BaseRetriever):
     retriever: Any = Field(...)
+    pastas: list = Field(default_factory=list)
 
     def get_relevant_documents(self, query):
-        administradoras = ["ITAÚ", "ADEMICON", "ÂNCORA", "BANCO DO BRASIL", "BANRISUL", "BRADESCO", "CAIXA", "CANOPUS", "CNP", "COLOMBO", "CRESOL", "EMBRACON", "GAZIN", "KASINSKI", "MAGALU", "MAGGI", "MYCON", "PORTO SEGURO", "PRIMO ROSSI", "RENAULT", "RODOBENS", "SANTANDER", "SCANIA", "SERELLO", "SERVOPA", "SICOOB", "SICREDI", "SINOSSERRA", "SPONCHIADO", "UNIÃO CATARINENSE", "UNIFISA", "YAMAHA", "ZEMA"]
         query_upper = query.upper()
-        admin_encontrada = None
-        for adm in administradoras:
-            if adm in query_upper:
-                admin_encontrada = adm
-                break
+        pasta_encontrada = next((p for p in self.pastas if p in query_upper), None)
         docs = self.retriever.get_relevant_documents(query)
-        if admin_encontrada:
-            docs_filtrados = [d for d in docs if d.metadata.get("pasta", "").upper() == admin_encontrada]
-            return docs_filtrados
+        if pasta_encontrada:
+            return [d for d in docs if d.metadata.get("pasta", "").upper() == pasta_encontrada]
         return docs
 
     async def aget_relevant_documents(self, query):
@@ -47,7 +42,7 @@ def carregar_documentos():
         admin_path = os.path.join(settings.DOCS_DIR, admin_folder)
         if os.path.isdir(admin_path):
             admin_name = admin_folder
-            logger.info(f"--- Processando documentos da administradora: {admin_name} ---")
+            logger.info(f"--- Processando documentos da pasta: {admin_name} ---")
             for filename in os.listdir(admin_path):
                 path = os.path.join(admin_path, filename)
                 docs_from_file = []
@@ -59,7 +54,7 @@ def carregar_documentos():
                         docs_from_file = [Document(page_content=texto, metadata={"source": path})]
                     
                     for doc in docs_from_file:
-                        doc.page_content = f"Fonte do documento: Administradora {admin_name}.\n---\nConteúdo: {doc.page_content}"
+                        doc.page_content = f"Fonte do documento: {admin_name}.\n---\nConteúdo: {doc.page_content}"
                         doc.metadata["source"] = path
                         doc.metadata["pasta"] = admin_name
                         doc.metadata["arquivo"] = filename
@@ -85,7 +80,8 @@ def salvar_banco_vector(docs):
 def carregar_chain():
     embedding = OpenAIEmbeddings(model=settings.EMBEDDING_MODEL)
     vectordb = Chroma(persist_directory=settings.DB_DIR, embedding_function=embedding)
-    retriever = AdminFilteredRetriever(retriever=vectordb.as_retriever(search_kwargs={'k': 8}))
+    pastas = {m.get("pasta", "").upper() for m in vectordb.get(include=["metadatas"])["metadatas"]}
+    retriever = PastaFilteredRetriever(retriever=vectordb.as_retriever(search_kwargs={'k': 8}), pastas=sorted(pastas - {""}))
 
     with open(settings.PROMPT_FILE, encoding="utf-8") as f:
         template = f.read()

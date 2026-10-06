@@ -45,10 +45,10 @@ def consultar(pergunta: Pergunta):
                 # Fallback para o método anterior
                 caminho_completo = doc.metadata.get('source', 'Desconhecido')
                 if caminho_completo != 'Desconhecido':
-                    # Extrai a pasta (administradora) e o nome do arquivo
+                    # Extrai a pasta e o nome do arquivo
                     partes_caminho = caminho_completo.replace('\\', '/').split('/')
                     if len(partes_caminho) >= 2:
-                        pasta = partes_caminho[-2]  # Pasta da administradora
+                        pasta = partes_caminho[-2]  # Pasta do documento
                         arquivo = partes_caminho[-1]  # Nome do arquivo
                         fonte = f"{pasta}/{arquivo}"
                     else:
