@@ -5,8 +5,7 @@
 # import io
 # import os 
 
-# # Variáveis de ambiente (recomendado para segurança, mas você pode substituir pelas suas strings direto)
-# AZURE_STORAGE_CONNECTION_STRING = "DefaultEndpointsProtocol=https;AccountName=storageapioraculozips;AccountKey=***REMOVED***;EndpointSuffix=core.windows.net"
+# AZURE_STORAGE_CONNECTION_STRING = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
 # AZURE_CONTAINER_NAME = "zip-files"
 # BLOB_NAME = "INFORMAÇÕES ADMs-20250612T203706Z-1-001.zip"
 
