@@ -1,6 +1,8 @@
 
 # Oráculo IA
 
+> ⚠️ **Prova de conceito (POC).** Este projeto não está pronto para produção: não tem autenticação, testes automatizados nem tratamento robusto de erros.
+
 API inteligente para consultas internas, baseada em banco vetorial e processamento de documentos. Utiliza Python, Docker e integrações modernas para facilitar buscas e respostas automáticas.
 
 ## Funcionalidades
