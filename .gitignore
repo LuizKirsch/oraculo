@@ -1,3 +1,4 @@
 /db_oraculo
 /oraculo_docs
 .env
+*.local.txt

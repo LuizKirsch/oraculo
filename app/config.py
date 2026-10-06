@@ -5,6 +5,7 @@ class Settings(BaseSettings):
     BASE_DIR: str = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     DOCS_DIR: str = os.path.join(BASE_DIR, "oraculo_docs")
     DB_DIR: str = os.path.join(BASE_DIR, "db_oraculo")
+    PROMPT_FILE: str = os.path.join(BASE_DIR, "app", "prompt.txt")
 
     OPENAI_API_KEY: str
     EMBEDDING_MODEL: str = "text-embedding-3-small"
